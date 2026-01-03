@@ -8,3 +8,5 @@ Route::post('/services', [ServiceApiController::class, 'store']);
 Route::get('/services/{id}', [ServiceApiController::class, 'show']);
 Route::put('/services/{id}', [ServiceApiController::class, 'update']);
 Route::delete('/services/{id}', [ServiceApiController::class, 'destroy']);
+
+
