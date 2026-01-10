@@ -42,6 +42,6 @@ class TransactionController extends Controller
         'total' => $total,
     ]);
 
-    return redirect()->back()->with('success', 'Transaksi berhasil disimpan');
+    return redirect()->back()->with('success', 'Transaksi Berhasi; Disimpan');
     }
 }
