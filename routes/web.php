@@ -32,3 +32,5 @@ require __DIR__.'/auth.php';
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('services', ServiceController::class);
 });
+
+
