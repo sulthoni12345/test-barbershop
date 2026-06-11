@@ -2,13 +2,13 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Register | Barbershop Kasir</title>
+    <title>Login | Barbershop Kasir</title>
 
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
 
     <style>
         body {
-            background-image: url('/images/register.jpg');
+            background-image: url('/images/login.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -36,11 +36,19 @@
 
     
     <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold tracking-wide">Daftar Akun</h1>
+        <h1 class="text-3xl font-bold tracking-wide">Barbershop Kasir</h1>
         <p class="text-sm text-gray-200 mt-2">
-            Sistem Barbershop Kasir
+            Sistem manajemen kasir modern
         </p>
     </div>
+
+    
+    <?php if(session('status')): ?>
+        <div class="mb-4 text-sm text-green-300">
+            <?php echo e(session('status')); ?>
+
+        </div>
+    <?php endif; ?>
 
     
     <?php if($errors->any()): ?>
@@ -53,52 +61,45 @@
         </div>
     <?php endif; ?>
 
-    <form method="POST" action="<?php echo e(route('register')); ?>" class="space-y-5">
+    
+    <form method="POST" action="<?php echo e(route('login')); ?>" class="space-y-5">
         <?php echo csrf_field(); ?>
 
         <div>
-            <label class="block text-sm mb-1">Nama</label>
-            <input type="text" name="name" required autofocus
-                   class="w-full px-4 py-2 rounded bg-white/20 text-white
-                          focus:outline-none focus:ring focus:ring-blue-500">
-        </div>
-
-        <div>
             <label class="block text-sm mb-1">Email</label>
-            <input type="email" name="email" required
-                   class="w-full px-4 py-2 rounded bg-white/20 text-white
+            <input type="email" name="email" required autofocus
+                   class="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-gray-200
                           focus:outline-none focus:ring focus:ring-blue-500">
         </div>
 
         <div>
             <label class="block text-sm mb-1">Password</label>
             <input type="password" name="password" required
-                   class="w-full px-4 py-2 rounded bg-white/20 text-white
+                   class="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-gray-200
                           focus:outline-none focus:ring focus:ring-blue-500">
         </div>
 
-        <div>
-            <label class="block text-sm mb-1">Konfirmasi Password</label>
-            <input type="password" name="password_confirmation" required
-                   class="w-full px-4 py-2 rounded bg-white/20 text-white
-                          focus:outline-none focus:ring focus:ring-blue-500">
+        <div class="flex items-center justify-between text-sm">
+            <label class="flex items-center gap-2">
+                <input type="checkbox" name="remember" class="rounded">
+                Remember me
+            </label>
+
+            <?php if(Route::has('password.request')): ?>
+                <a href="<?php echo e(route('password.request')); ?>" class="underline hover:text-blue-300">
+                    Lupa password?
+                </a>
+            <?php endif; ?>
         </div>
 
         <button type="submit"
                 class="w-full py-2 mt-4 rounded bg-blue-600 hover:bg-blue-700 transition font-semibold">
-            Daftar
+            Login
         </button>
     </form>
-
-    <div class="text-center mt-6 text-sm">
-        Sudah punya akun?
-        <a href="<?php echo e(route('login')); ?>" class="underline hover:text-blue-300">
-            Login
-        </a>
-    </div>
 
 </div>
 
 </body>
 </html>
-<?php /**PATH C:\tubes_barbershop\tubes_barbershop\barbershop\resources\views/auth/register.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\SEMESTER 4\PENGUJIAN\-Kasir-Barbershop\resources\views/auth/login.blade.php ENDPATH**/ ?>

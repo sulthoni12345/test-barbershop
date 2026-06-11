@@ -119,4 +119,4 @@
 
 </body>
 </html>
-<?php /**PATH C:\tubes_barbershop\tubes_barbershop\barbershop\resources\views/landing.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\SEMESTER 4\PENGUJIAN\-Kasir-Barbershop\resources\views/landing.blade.php ENDPATH**/ ?>

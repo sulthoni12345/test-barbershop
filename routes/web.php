@@ -8,7 +8,6 @@ use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return view('landing');
-
 })->name('landing');
 
 Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
@@ -21,16 +20,15 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-//kasir & admin transaksi
+// Kasir & Admin — Transaksi + Cetak Struk
 Route::middleware(['auth', 'role:kasir,admin'])->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::get('/transactions/{transaction}/struk', [TransactionController::class, 'struk'])->name('transactions.struk');
 });
 
-//admin kelola layanan
+// Admin — Kelola Layanan
 require __DIR__.'/auth.php';
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('services', ServiceController::class);
 });
-
-

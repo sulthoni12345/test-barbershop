@@ -31,4 +31,4 @@
 </div>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\tubes_barbershop\tubes_barbershop\barbershop\resources\views/dashboard.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\SEMESTER 4\PENGUJIAN\-Kasir-Barbershop\resources\views/dashboard.blade.php ENDPATH**/ ?>

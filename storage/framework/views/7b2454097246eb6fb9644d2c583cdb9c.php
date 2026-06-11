@@ -9,37 +9,39 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="{{ route('dashboard') }}">
+        <a class="navbar-brand fw-bold" href="<?php echo e(route('dashboard')); ?>">
             Barbershop Kasir
         </a>
         <div class="d-flex align-items-center gap-3">
             <ul class="navbar-nav flex-row gap-3 mb-0">
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'fw-bold text-dark' : '' }}"
-                       href="{{ route('dashboard') }}">Dashboard</a>
+                    <a class="nav-link <?php echo e(request()->routeIs('dashboard') ? 'fw-bold text-dark' : ''); ?>"
+                       href="<?php echo e(route('dashboard')); ?>">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('transactions.*') ? 'fw-bold text-dark' : '' }}"
-                       href="{{ route('transactions.index') }}">Transaksi</a>
+                    <a class="nav-link <?php echo e(request()->routeIs('transactions.*') ? 'fw-bold text-dark' : ''); ?>"
+                       href="<?php echo e(route('transactions.index')); ?>">Transaksi</a>
                 </li>
-                @if(auth()->user()->role === 'admin')
+                <?php if(auth()->user()->role === 'admin'): ?>
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('services.*') ? 'fw-bold text-dark' : '' }}"
-                       href="{{ route('services.index') }}">Kelola Layanan</a>
+                    <a class="nav-link <?php echo e(request()->routeIs('services.*') ? 'fw-bold text-dark' : ''); ?>"
+                       href="<?php echo e(route('services.index')); ?>">Kelola Layanan</a>
                 </li>
-                @endif
+                <?php endif; ?>
             </ul>
             <div class="dropdown">
                 <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                    {{ auth()->user()->name }}
-                    <span class="badge bg-{{ auth()->user()->role === 'admin' ? 'danger' : 'secondary' }} ms-1">
-                        {{ auth()->user()->role }}
+                    <?php echo e(auth()->user()->name); ?>
+
+                    <span class="badge bg-<?php echo e(auth()->user()->role === 'admin' ? 'danger' : 'secondary'); ?> ms-1">
+                        <?php echo e(auth()->user()->role); ?>
+
                     </span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
+                        <form method="POST" action="<?php echo e(route('logout')); ?>">
+                            <?php echo csrf_field(); ?>
                             <button class="dropdown-item">Logout</button>
                         </form>
                     </li>
@@ -50,7 +52,7 @@
 </nav>
 
 <main class="container my-4">
-    @yield('content')
+    <?php echo $__env->yieldContent('content'); ?>
 </main>
 
 <footer class="text-center text-muted py-3">
@@ -60,3 +62,4 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<?php /**PATH C:\SEMESTER 4\PENGUJIAN\-Kasir-Barbershop\resources\views/layouts/app.blade.php ENDPATH**/ ?>
