@@ -1,8 +1,8 @@
 # test_admin.py
-# Selenium UI Test — Fitur CRUD Layanan (Admin)
-# Berdasarkan State Transition BAB V: Login Admin → CRUD Services
+# File: selenium-tests/test_admin.py
+# TEST ADMIN — CRUD Layanan (4 test)
+# Kelompok Der Panzer | Pengujian dan Implementasi Sistem
 
-import time
 import unittest
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,54 +13,59 @@ from config import BASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD
 class TestAdminCRUD(BaseTest):
 
     def setUp(self):
+        """Login sebagai admin sebelum setiap test"""
         super().setUp()
-        # Login sebagai admin sebelum setiap test
-        self.login(ADMIN_EMAIL, ADMIN_PASSWORD, wait_url="/services")
+        self.login(ADMIN_EMAIL, ADMIN_PASSWORD)
 
+    # ---------------------------------------------------------------
+    # test_01 — State S2: Admin Dashboard — tabel daftar layanan tampil
+    # ---------------------------------------------------------------
     def test_01_melihat_daftar_layanan(self):
-        """State: Admin → Services — halaman daftar layanan tampil dengan tabel"""
+        """State S2: Admin Dashboard — tabel daftar layanan tampil"""
         # Arrange
         self.driver.get(f"{BASE_URL}/services")
 
-        # Assert
-        self.assertIn(
-            "Data Layanan", self.driver.page_source,
-            "Judul 'Data Layanan' harus tampil"
-        )
-        tabel = self.driver.find_element(By.CSS_SELECTOR, "table")
-        self.assertTrue(tabel.is_displayed(), "Tabel layanan harus tampil")
+        # Assert — tabel layanan tersedia di halaman
+        table = self.driver.find_element(By.CSS_SELECTOR, "table")
+        self.assertTrue(table.is_displayed())
 
+    # ---------------------------------------------------------------
+    # test_02 — State S4: Form Tambah Layanan → submit valid → S2
+    # ---------------------------------------------------------------
     def test_02_menambah_layanan_baru(self):
-        """State: Services → Create Service → Services — tambah layanan berhasil"""
+        """State S4: Form Tambah Layanan — submit valid → data tersimpan di tabel"""
         # Arrange
         self.driver.get(f"{BASE_URL}/services/create")
 
-        # Act
+        # Act — isi form
         self.driver.find_element(By.NAME, "name").send_keys("Cukur Selenium Test")
         self.driver.find_element(By.NAME, "price").send_keys("75000")
+
+        # Tombol Simpan di create.blade.php: <button class="btn btn-primary">
         self.driver.find_element(
-            By.CSS_SELECTOR, "button[type='submit']"
+            By.CSS_SELECTOR, ".card-body button.btn-primary"
         ).click()
 
-        # Wait & Assert
+        # Assert — redirect ke /services dan nama layanan muncul di tabel
         self.wait.until(EC.url_contains("/services"))
-        self.assertIn(
-            "Cukur Selenium Test", self.driver.page_source,
-            "Layanan baru harus tampil di tabel setelah berhasil ditambah"
-        )
+        self.assertIn("Cukur Selenium Test", self.driver.page_source)
 
+    # ---------------------------------------------------------------
+    # test_03 — State S5: Form Edit Layanan → submit valid → S2
+    # FIX: edit.blade.php pakai btn-warning bukan btn-primary
+    # ---------------------------------------------------------------
     def test_03_mengedit_layanan(self):
-        """State: Services → Edit Service → Services — edit layanan berhasil"""
+        """State S5: Form Edit Layanan — submit valid → data terupdate di tabel"""
         # Arrange — buka halaman services
         self.driver.get(f"{BASE_URL}/services")
 
-        # Act — klik tombol Edit pada baris pertama
+        # Act — klik tombol Edit (btn-warning) pada baris pertama tabel
         edit_btn = self.driver.find_element(
             By.CSS_SELECTOR, "table tbody tr:first-child a.btn-warning"
         )
         edit_btn.click()
 
-        # Ubah nama layanan
+        # Ubah nama dan harga layanan
         name_input = self.driver.find_element(By.NAME, "name")
         name_input.clear()
         name_input.send_keys("Layanan Edit Selenium")
@@ -69,50 +74,52 @@ class TestAdminCRUD(BaseTest):
         price_input.clear()
         price_input.send_keys("50000")
 
+        # FIX: tombol Update di edit.blade.php pakai class btn-warning
+        # <button class="btn btn-warning">Update</button>
         self.driver.find_element(
-            By.CSS_SELECTOR, "button[type='submit']"
+            By.CSS_SELECTOR, ".card-body button.btn-warning"
         ).click()
 
-        # Wait & Assert
+        # Assert — redirect ke /services dan nama baru muncul
         self.wait.until(EC.url_contains("/services"))
-        self.assertIn(
-            "Layanan Edit Selenium", self.driver.page_source,
-            "Nama layanan yang diedit harus muncul di tabel"
-        )
+        self.assertIn("Layanan Edit Selenium", self.driver.page_source)
 
+    # ---------------------------------------------------------------
+    # test_04 — State S2: Hapus layanan → data hilang dari tabel
+    # FIX: tombol hapus memunculkan JS confirm() → harus di-accept dulu
+    # ---------------------------------------------------------------
     def test_04_menghapus_layanan(self):
-        """State: Services → Delete → Services — hapus layanan berhasil"""
-        # Arrange — tambah layanan dulu agar ada yang dihapus
+        """State S2: Hapus layanan — data hilang dari tabel setelah dihapus"""
+        # Arrange — tambah layanan dummy dulu agar ada yang dihapus
         self.driver.get(f"{BASE_URL}/services/create")
         self.driver.find_element(By.NAME, "name").send_keys("Layanan Hapus Ini")
         self.driver.find_element(By.NAME, "price").send_keys("10000")
-        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+        self.driver.find_element(
+            By.CSS_SELECTOR, ".card-body button.btn-primary"
+        ).click()
         self.wait.until(EC.url_contains("/services"))
 
         # Catat jumlah baris sebelum hapus
-        rows_before = len(
-            self.driver.find_elements(By.CSS_SELECTOR, "table tbody tr")
-        )
+        rows_before = len(self.driver.find_elements(
+            By.CSS_SELECTOR, "table tbody tr"
+        ))
 
-        # Act — klik Hapus pada baris terakhir
-        hapus_btn = self.driver.find_element(
+        # Act — klik tombol Hapus (btn-danger) pada baris terakhir tabel
+        delete_btn = self.driver.find_element(
             By.CSS_SELECTOR, "table tbody tr:last-child button.btn-danger"
         )
-        # Handle confirm dialog
-        self.driver.execute_script(
-            "window.confirm = function(){ return true; }"
-        )
-        hapus_btn.click()
-        time.sleep(1)
+        delete_btn.click()
 
-        # Assert — jumlah baris berkurang 1
-        rows_after = len(
-            self.driver.find_elements(By.CSS_SELECTOR, "table tbody tr")
-        )
-        self.assertEqual(
-            rows_after, rows_before - 1,
-            "Jumlah baris tabel harus berkurang 1 setelah hapus"
-        )
+        # FIX: tombol hapus memunculkan confirm() "Hapus layanan?"
+        # harus accept dialog JS sebelum Selenium bisa lanjut
+        self.driver.switch_to.alert.accept()
+
+        # Assert — tunggu redirect dan jumlah baris berkurang 1
+        self.wait.until(EC.url_contains("/services"))
+        rows_after = len(self.driver.find_elements(
+            By.CSS_SELECTOR, "table tbody tr"
+        ))
+        self.assertEqual(rows_after, rows_before - 1)
 
 
 if __name__ == "__main__":

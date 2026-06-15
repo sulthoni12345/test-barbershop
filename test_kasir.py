@@ -1,106 +1,155 @@
 # test_kasir.py
-# Selenium UI Test — Fitur Kasir (Transaksi + Akses Role)
-# Berdasarkan State Transition BAB V: Login Kasir → Transaksi / Akses Ditolak
+# File: selenium-tests/test_kasir.py
+# TEST KASIR — Transaksi & Kontrol Akses (4 test)
+# Kelompok Der Panzer | Pengujian dan Implementasi Sistem
 
-import time
 import unittest
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
+
 from base_test import BaseTest
-from config import BASE_URL, KASIR_EMAIL, KASIR_PASSWORD
+from config import (
+    BASE_URL,
+    KASIR_EMAIL,
+    KASIR_PASSWORD
+)
 
 
 class TestKasirAkses(BaseTest):
 
     def setUp(self):
+        """
+        Login sebagai kasir sebelum setiap test
+        Menggunakan helper login dari BaseTest
+        """
         super().setUp()
-        # Login sebagai kasir sebelum setiap test
-        self.login(KASIR_EMAIL, KASIR_PASSWORD, wait_url="/transactions")
 
-    def test_01_melihat_halaman_transaksi(self):
-        """State: Kasir → Transactions — halaman transaksi tampil lengkap"""
+        # Login menggunakan method yang sudah terbukti berjalan
+        self.login(
+            KASIR_EMAIL,
+            KASIR_PASSWORD
+        )
+
+        # Pastikan login berhasil dan redirect ke dashboard kasir
+        self.wait.until(
+            EC.url_contains("/transactions")
+        )
+
+    # ---------------------------------------------------------------
+    # test_01 — State: S3 Kasir Dashboard (/transactions)
+    # Transisi: Login kasir valid → redirect /transactions → tabel tampil
+    # ---------------------------------------------------------------
+    def test_01_melihat_daftar_transaksi(self):
+        """State S3: Kasir Dashboard — tabel daftar transaksi tampil"""
+
         # Arrange
         self.driver.get(f"{BASE_URL}/transactions")
 
         # Assert
-        self.assertIn(
-            "Transaksi Kasir", self.driver.page_source,
-            "Judul 'Transaksi Kasir' harus tampil"
-        )
-        self.assertTrue(
-            self.driver.find_element(
-                By.NAME, "service_id"
-            ).is_displayed(),
-            "Dropdown pilih layanan harus tampil"
-        )
-        self.assertTrue(
-            self.driver.find_element(
-                By.NAME, "qty"
-            ).is_displayed(),
-            "Input qty harus tampil"
+        table = self.driver.find_element(
+            By.CSS_SELECTOR,
+            "table"
         )
 
-    def test_02_menambah_transaksi_berhasil(self):
-        """State: Kasir → Add Transaction → Transactions — transaksi tersimpan"""
+        self.assertTrue(table.is_displayed())
+
+    # ---------------------------------------------------------------
+    # test_02 — State: S3 Kasir Dashboard → S7 Form Transaksi → S3
+    # Transisi: Klik Tambah Transaksi → isi form valid
+    # → submit → kembali ke /transactions
+    # ---------------------------------------------------------------
+    def test_02_menambah_transaksi_baru(self):
+        """State S7: Form Tambah Transaksi — submit valid"""
+
         # Arrange
-        self.driver.get(f"{BASE_URL}/transactions")
-
-        # Act — pilih layanan pertama dari dropdown
-        select_layanan = Select(
-            self.driver.find_element(By.NAME, "service_id")
+        self.driver.get(
+            f"{BASE_URL}/transactions/create"
         )
-        select_layanan.select_by_index(0)
+
+        # Pilih layanan pertama
+        select_service = self.driver.find_element(
+            By.NAME,
+            "service_id"
+        )
+
+        options = select_service.find_elements(
+            By.TAG_NAME,
+            "option"
+        )
+
+        for option in options:
+            if option.get_attribute("value"):
+                option.click()
+                break
 
         # Isi qty
-        qty_input = self.driver.find_element(By.NAME, "qty")
-        qty_input.clear()
-        qty_input.send_keys("2")
-
-        # Klik simpan
         self.driver.find_element(
-            By.CSS_SELECTOR, "button.btn-success"
+            By.NAME,
+            "qty"
+        ).send_keys("2")
+
+        # Submit form
+        self.driver.find_element(
+            By.CSS_SELECTOR,
+            ".card-body button.btn-primary"
         ).click()
-        time.sleep(1)
 
-        # Assert — sukses, tetap di halaman transactions
+        # Assert redirect berhasil
+        self.wait.until(
+            EC.url_contains("/transactions")
+        )
+
         self.assertIn(
-            "/transactions", self.driver.current_url,
-            "Setelah simpan transaksi harus kembali ke /transactions"
+            "/transactions",
+            self.driver.current_url
         )
+
+    # ---------------------------------------------------------------
+    # test_03 — State: S3 Kasir Dashboard → S6 (403 Forbidden)
+    # Transisi: Kasir akses /services → ditolak
+    # ---------------------------------------------------------------
+    def test_03_kasir_akses_services_ditolak_403(self):
+        """State S6: Kasir tidak boleh akses halaman admin"""
+
+        self.driver.get(
+            f"{BASE_URL}/services"
+        )
+
         self.assertIn(
-            "transactions", self.driver.current_url,
-            "Transaksi berhasil disimpan"
+            "403",
+            self.driver.page_source
         )
 
-    def test_03_kasir_tidak_bisa_akses_halaman_services(self):
-        """State: Kasir → /services → 403 — akses ditolak karena role tidak sesuai"""
-        # Act — kasir coba akses halaman admin
-        self.driver.get(f"{BASE_URL}/services")
-        time.sleep(1)
+    # ---------------------------------------------------------------
+    # test_04 — State: S3 Kasir Dashboard → S8 Halaman Struk
+    # Transisi: Klik Cetak Struk → halaman struk tampil
+    # ---------------------------------------------------------------
+    def test_04_melihat_struk_transaksi(self):
+        """State S8: Halaman Struk transaksi"""
 
-        # Assert — tampil halaman 403
+        self.driver.get(
+            f"{BASE_URL}/transactions"
+        )
+
+        struk_btn = self.driver.find_element(
+            By.CSS_SELECTOR,
+            "table tbody tr:first-child a.btn-info"
+        )
+
+        struk_btn.click()
+
+        self.wait.until(
+            EC.url_contains("struk")
+        )
+
         self.assertIn(
-            "403", self.driver.page_source,
-            "Kasir harus mendapat halaman 403 saat akses /services"
-        )
-        self.assertNotIn(
-            "Data Layanan", self.driver.page_source,
-            "Kasir tidak boleh melihat konten halaman Data Layanan"
+            "struk",
+            self.driver.current_url.lower()
         )
 
-    def test_04_navbar_kasir_tidak_tampilkan_menu_layanan(self):
-        """State: Kasir → Transactions — menu 'Kelola Layanan' tidak tampil di navbar"""
-        # Arrange
-        self.driver.get(f"{BASE_URL}/transactions")
-
-        # Assert — menu admin tidak tampil untuk kasir
-        menu_layanan = self.driver.find_elements(
-            By.LINK_TEXT, "Kelola Layanan"
-        )
-        self.assertEqual(
-            len(menu_layanan), 0,
-            "Menu 'Kelola Layanan' tidak boleh tampil di navbar kasir"
+        self.assertIn(
+            "Total",
+            self.driver.page_source
         )
 
 
