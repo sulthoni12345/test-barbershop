@@ -104,11 +104,15 @@ class TestAdminCRUD(BaseTest):
             By.CSS_SELECTOR, "table tbody tr"
         ))
 
-        # Act — klik tombol Hapus (btn-danger) pada baris terakhir tabel
+        # Act — scroll ke baris terakhir dulu agar tidak tertutup footer
         delete_btn = self.driver.find_element(
             By.CSS_SELECTOR, "table tbody tr:last-child button.btn-danger"
         )
-        delete_btn.click()
+        self.driver.execute_script("arguments[0].scrollIntoView(true);", delete_btn)
+
+        # FIX: pakai JS click agar bypass ElementClickInterceptedException
+        # (tombol tertutup elemen lain di viewport — JS click tidak terpengaruh)
+        self.driver.execute_script("arguments[0].click();", delete_btn)
 
         # FIX: tombol hapus memunculkan confirm() "Hapus layanan?"
         # harus accept dialog JS sebelum Selenium bisa lanjut

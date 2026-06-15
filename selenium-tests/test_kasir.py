@@ -1,177 +1,118 @@
+# test_kasir.py
+# File: selenium-tests/test_kasir.py
+# TEST KASIR — Transaksi (4 test)
+# Kelompok Der Panzer | Pengujian dan Implementasi Sistem
+
 import unittest
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+from datetime import date
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-
-# ─── Sesuaikan jika URL berbeda ───────────────────────────────────────────────
-BASE_URL = "http://127.0.0.1:8000"
-KASIR_EMAIL = "kasir@barbershop.com"
-KASIR_PASSWORD = "kasir123"
-# ──────────────────────────────────────────────────────────────────────────────
+from base_test import BaseTest
+from config import BASE_URL, KASIR_EMAIL, KASIR_PASSWORD
 
 
-class TestKasirAkses(unittest.TestCase):
+class TestKasirAkses(BaseTest):
 
     def setUp(self):
-        options = webdriver.ChromeOptions()
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--window-size=1280,720")
-        self.driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
-            options=options
-        )
-        self.driver.implicitly_wait(10)
-        self.wait = WebDriverWait(self.driver, 15)
-        self._login_kasir()
+        """Login sebagai kasir sebelum setiap test"""
+        super().setUp()
+        self.login(KASIR_EMAIL, KASIR_PASSWORD)
+        self.wait.until(EC.url_contains("/transactions"))
 
-    def tearDown(self):
-        self.driver.quit()
-
-    # ── helper: find element by multiple selectors, return first found ─────────
-    def _find(self, selectors):
-        """Coba beberapa selector, kembalikan elemen pertama yang ditemukan."""
-        for by, val in selectors:
-            try:
-                el = self.driver.find_element(by, val)
-                if el:
-                    return el
-            except Exception:
-                continue
-        raise Exception(f"Tidak ada elemen ditemukan dari: {selectors}")
-
-    # ── helper: login sebagai kasir ────────────────────────────────────────────
-    def _login_kasir(self):
-        self.driver.get(f"{BASE_URL}/login")
-        time.sleep(2)  # tunggu halaman load sepenuhnya
-
-        # Cari field email — coba id, name, type, placeholder
-        email_el = self._find([
-            (By.ID,   "email"),
-            (By.NAME, "email"),
-            (By.CSS_SELECTOR, "input[type='email']"),
-            (By.CSS_SELECTOR, "input[placeholder*='email' i]"),
-            (By.CSS_SELECTOR, "input[placeholder*='Email' i]"),
-        ])
-        email_el.clear()
-        email_el.send_keys(KASIR_EMAIL)
-
-        # Cari field password
-        pass_el = self._find([
-            (By.ID,   "password"),
-            (By.NAME, "password"),
-            (By.CSS_SELECTOR, "input[type='password']"),
-        ])
-        pass_el.clear()
-        pass_el.send_keys(KASIR_PASSWORD)
-
-        # Cari tombol submit
-        submit_el = self._find([
-            (By.CSS_SELECTOR, "button[type='submit']"),
-            (By.CSS_SELECTOR, "input[type='submit']"),
-            (By.XPATH, "//button[contains(translate(text(),'LOGIN','login'),'login') or contains(translate(text(),'MASUK','masuk'),'masuk')]"),
-        ])
-        submit_el.click()
-        time.sleep(3)  # tunggu redirect selesai
-
-    # ── T5 → S4 : Kasir melihat daftar transaksi ──────────────────────────────
-    def test_01_melihat_daftar_transaksi(self):
-        """State S4: Halaman Transaksi Kasir — tabel riwayat tampil"""
+    # ---------------------------------------------------------------
+    # test_01 — State S3: Kasir Dashboard (/transactions)
+    # Verifikasi: 3 kartu summary + tabel riwayat tampil
+    # ---------------------------------------------------------------
+    def test_01_melihat_dashboard_dan_riwayat_transaksi(self):
+        """State S3: Kasir Dashboard — kartu summary dan tabel riwayat tampil"""
+        # Arrange
         self.driver.get(f"{BASE_URL}/transactions")
-        time.sleep(2)
 
-        table = self._find([
-            (By.CSS_SELECTOR, "table"),
-            (By.CSS_SELECTOR, ".table"),
-            (By.TAG_NAME,     "table"),
-        ])
-        self.assertTrue(table.is_displayed(),
-                        "Tabel riwayat transaksi harus tampil di halaman /transactions")
+        # Assert — 3 kartu summary (Total Hari Ini, Total Keseluruhan, Jumlah Transaksi)
+        cards = self.driver.find_elements(By.CSS_SELECTOR, ".card.shadow-sm.border-0")
+        self.assertGreaterEqual(len(cards), 3)
 
-    # ── T13 → S4 : Kasir menambah transaksi baru ──────────────────────────────
-    def test_02_menambah_transaksi_baru(self):
-        """State S7: Form Tambah Transaksi — submit valid"""
-        self.driver.get(f"{BASE_URL}/transactions/create")
-        time.sleep(2)
+        # Assert — tabel riwayat transaksi tampil
+        table = self.driver.find_element(By.CSS_SELECTOR, "table")
+        self.assertTrue(table.is_displayed())
 
-        # Cari dropdown layanan
-        service_el = self._find([
-            (By.NAME,         "service_id"),
-            (By.CSS_SELECTOR, "select[name='service_id']"),
-            (By.CSS_SELECTOR, "select"),          # fallback: select pertama
-        ])
-        select = Select(service_el)
-        # Pilih option pertama yang punya value (skip placeholder kosong)
-        valid_opts = [o for o in select.options if o.get_attribute("value")]
-        self.assertGreater(len(valid_opts), 0,
-                           "Harus ada minimal satu layanan di dropdown")
-        select.select_by_value(valid_opts[0].get_attribute("value"))
+        # Assert — tabel memiliki kolom yang benar
+        self.assertIn("Layanan", self.driver.page_source)
+        self.assertIn("Total", self.driver.page_source)
+        self.assertIn("Cetak Struk", self.driver.page_source)
 
-        # Cari field qty
-        qty_el = self._find([
-            (By.NAME,         "qty"),
-            (By.CSS_SELECTOR, "input[name='qty']"),
-            (By.CSS_SELECTOR, "input[type='number']"),
-        ])
-        qty_el.clear()
-        qty_el.send_keys("2")
+    # ---------------------------------------------------------------
+    # test_02 — State S3: Filter Riwayat Transaksi
+    # Transisi: Isi filter tanggal → klik Filter → hasil berubah sesuai range
+    # ---------------------------------------------------------------
+    def test_02_filter_riwayat_transaksi(self):
+        """State S3: Filter tanggal — tabel menampilkan transaksi sesuai range"""
+        # Arrange
+        self.driver.get(f"{BASE_URL}/transactions")
 
-        # Submit
-        submit_el = self._find([
-            (By.CSS_SELECTOR, "button[type='submit']"),
-            (By.CSS_SELECTOR, "input[type='submit']"),
-        ])
-        submit_el.click()
-        time.sleep(3)
+        # Ambil tanggal hari ini dalam format yyyy-mm-dd untuk input[type=date]
+        today = date.today().strftime("%Y-%m-%d")
 
-        self.assertIn("/transactions", self.driver.current_url,
-                      "Setelah submit transaksi, harus redirect ke /transactions")
+        # Act — isi filter "Dari Tanggal" dan "Sampai Tanggal" dengan hari ini
+        dari_input = self.driver.find_element(By.NAME, "dari")
+        dari_input.send_keys(today)
 
-    # ── T11 → S6 : Kasir akses /services ditolak 403 ─────────────────────────
+        sampai_input = self.driver.find_element(By.NAME, "sampai")
+        sampai_input.send_keys(today)
+
+        # Klik tombol Filter (btn-primary di form GET filter)
+        self.driver.find_element(
+            By.CSS_SELECTOR, "form[method='GET'] button[type='submit']"
+        ).click()
+
+        # Assert — URL mengandung parameter filter dan halaman tetap di /transactions
+        self.wait.until(EC.url_contains("/transactions"))
+        self.assertIn("dari=", self.driver.current_url)
+        self.assertIn("sampai=", self.driver.current_url)
+
+        # Assert — tabel tetap tampil setelah filter
+        table = self.driver.find_element(By.CSS_SELECTOR, "table")
+        self.assertTrue(table.is_displayed())
+
+    # ---------------------------------------------------------------
+    # test_03 — State S3 → S6: Kasir akses /services → 403 Forbidden
+    # Transisi: Kasir paksa akses halaman admin via URL langsung
+    # ---------------------------------------------------------------
     def test_03_kasir_akses_services_ditolak_403(self):
-        """State S6: Akses Ditolak — kasir mencoba /services dapat 403"""
+        """State S6: Kasir akses /services langsung via URL → 403 Forbidden"""
+        # Act — kasir paksa akses halaman kelola layanan milik admin
         self.driver.get(f"{BASE_URL}/services")
-        time.sleep(2)
 
-        src = self.driver.page_source.lower()
-        is_403 = any(kw in src for kw in [
-            "403", "forbidden", "tidak diizinkan",
-            "unauthorized", "access denied", "akses ditolak",
-        ])
-        self.assertTrue(is_403,
-                        "Kasir yang akses /services harus mendapat 403 Forbidden")
+        # Assert — halaman 403 Forbidden tampil
+        self.assertIn("403", self.driver.page_source)
 
-    # ── T9 → S5 : Kasir melihat struk transaksi ───────────────────────────────
+    # ---------------------------------------------------------------
+    # test_04 — State S3 → S8: Klik Cetak Struk → halaman struk tampil
+    # Transisi: Klik tombol Cetak Struk baris pertama → URL /struk + konten tampil
+    # ---------------------------------------------------------------
     def test_04_melihat_struk_transaksi(self):
-        """State S5: Halaman Struk Transaksi"""
+        """State S8: Halaman Struk — detail transaksi tampil setelah klik Cetak Struk"""
+        # Arrange
         self.driver.get(f"{BASE_URL}/transactions")
-        time.sleep(2)
 
-        # Cari tombol/link struk pada baris pertama tabel
-        struk_el = self._find([
-            (By.CSS_SELECTOR, "table tbody tr:first-child a.btn-info"),
-            (By.CSS_SELECTOR, "table tbody tr:first-child a[href*='struk']"),
-            (By.CSS_SELECTOR, "table tbody tr:first-child a[href*='receipt']"),
-            (By.CSS_SELECTOR, "table tbody tr:first-child a[href*='print']"),
-            (By.CSS_SELECTOR, "table tbody tr:first-child a[href*='show']"),
-            (By.CSS_SELECTOR, "table tbody tr:first-child a"),  # link apapun di baris pertama
-        ])
+        # Tunggu tabel transaksi muncul
+        self.wait.until(EC.presence_of_element_located(
+            By.CSS_SELECTOR, "table tbody tr"
+        ))
 
-        struk_url = struk_el.get_attribute("href")
-        self.driver.get(struk_url)
-        time.sleep(2)
+        # Act — klik tombol Cetak Struk pada baris pertama tabel
+        # Selector: a.btn-outline-primary di baris pertama tbody
+        struk_btn = self.driver.find_element(
+            By.CSS_SELECTOR, "table tbody tr:first-child a.btn-outline-primary"
+        )
+        struk_link = struk_btn.get_attribute("href")
 
-        src = self.driver.page_source.lower()
-        has_content = any(kw in src for kw in [
-            "struk", "receipt", "total", "layanan",
-            "service", "qty", "pembayaran", "transaksi",
-        ])
-        self.assertTrue(has_content,
-                        "Halaman struk harus menampilkan detail transaksi")
+        # Buka URL struk langsung (tombol punya target="_blank", buka di tab sama)
+        self.driver.get(struk_link)
+
+        # Assert — URL mengandung /struk dan konten struk tampil
+        self.assertIn("struk", self.driver.current_url)
+        self.assertIn("Total", self.driver.page_source)
 
 
 if __name__ == "__main__":
