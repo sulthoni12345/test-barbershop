@@ -3,12 +3,7 @@
 use App\Models\User;
 use App\Models\Service;
 
-// ============================================================
-// FEATURE TEST — CRUD Layanan (Admin)
-// Berdasarkan Equivalence Partitioning BAB II (5 kelas EP)
-// ============================================================
 
-// --- Kelas Valid ---
 
 test('[EP-N1] admin tambah layanan dengan nama valid berhasil disimpan', function () {
     $admin = User::factory()->admin()->create();

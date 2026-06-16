@@ -2,11 +2,6 @@
 
 use App\Models\User;
 
-// ============================================================
-// FEATURE TEST — Fitur Login
-// Berdasarkan Equivalence Partitioning BAB II (8 kelas EP)
-// ============================================================
-
 // --- Kelas Valid ---
 
 test('[EP-E1] login dengan email dan password valid sebagai kasir berhasil', function () {

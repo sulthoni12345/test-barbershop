@@ -4,11 +4,6 @@ use App\Models\User;
 use App\Models\Service;
 use App\Models\Transaction;
 
-// ============================================================
-// FEATURE TEST — Tambah Transaksi (Kasir)
-// Berdasarkan Equivalence Partitioning BAB II (7 kelas EP)
-// ============================================================
-
 // --- Kelas Valid ---
 
 test('[EP-S1] kasir pilih layanan valid transaksi berhasil disimpan', function () {
