@@ -12,3 +12,17 @@ storage/logs/*.log
 bootstrap/cache/*.php
 
 chromedriver.exe
+
+# Laravel
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+
+public/build/
+
+# Exceptions
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/views/.gitignore
+!storage/logs/.gitignore
