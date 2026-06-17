@@ -15,7 +15,7 @@ Aplikasi ini berfungsi sebagai platform manajemen satu pintu (**one-stop managem
 
 ## Login
 
-![Login](screenshots/Login.png)
+![login](screenshots/login.png)
 
 ## Dashboard Admin
 
