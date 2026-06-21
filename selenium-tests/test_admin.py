@@ -16,7 +16,11 @@ class TestAdminCRUD(BaseTest):
     def setUp(self):
         """Login sebagai admin sebelum setiap test"""
         super().setUp()
-        self.login(ADMIN_EMAIL, ADMIN_PASSWORD)
+        # FIX: wait_url ditambahkan agar setUp menunggu redirect ke
+        # /services selesai sepenuhnya sebelum method test_xx dijalankan.
+        # Tanpa ini, test bisa "menggantung" karena mencari elemen yang
+        # belum ada di halaman (masih di /login saat browser dianggap siap).
+        self.login(ADMIN_EMAIL, ADMIN_PASSWORD, wait_url="/services")
 
     # ---------------------------------------------------------------
     # test_01 — State S2: Admin Dashboard — tabel daftar layanan tampil
@@ -25,7 +29,9 @@ class TestAdminCRUD(BaseTest):
         """State S2: Admin Dashboard — tabel daftar layanan tampil"""
         self.driver.get(f"{BASE_URL}/services")
 
-        table = self.driver.find_element(By.CSS_SELECTOR, "table")
+        table = self.wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "table"))
+        )
         self.assertTrue(table.is_displayed())
 
     # ---------------------------------------------------------------
@@ -69,12 +75,16 @@ class TestAdminCRUD(BaseTest):
         """State S5: Form Edit Layanan — submit valid → data terupdate di tabel"""
         self.driver.get(f"{BASE_URL}/services")
 
-        edit_btn = self.driver.find_element(
-            By.CSS_SELECTOR, "table tbody tr:first-child a.btn-warning"
+        edit_btn = self.wait.until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "table tbody tr:first-child a.btn-warning")
+            )
         )
         edit_btn.click()
 
-        name_input = self.driver.find_element(By.NAME, "name")
+        name_input = self.wait.until(
+            EC.presence_of_element_located((By.NAME, "name"))
+        )
         name_input.clear()
         name_input.send_keys("Layanan Edit Selenium")
 

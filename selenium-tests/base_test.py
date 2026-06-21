@@ -1,4 +1,8 @@
 # base_test.py
+
+import os
+os.environ['WDM_LOCAL'] = '1'
+
 import time
 import unittest
 from selenium import webdriver
@@ -31,7 +35,7 @@ class BaseTest(unittest.TestCase):
         )
         self.driver.implicitly_wait(10)
         self.wait = WebDriverWait(self.driver, 15)
-        time.sleep(2)  # beri waktu Chrome fully loaded
+        time.sleep(1)  # cukup 1 detik, Chrome sudah stabil
 
     def tearDown(self):
         try:
@@ -41,7 +45,12 @@ class BaseTest(unittest.TestCase):
 
     def login(self, email, password, wait_url=None):
         self.driver.get(f"{BASE_URL}/login")
-        time.sleep(1)
+
+        # Tunggu form login benar-benar siap, bukan sleep buta
+        self.wait.until(
+            EC.presence_of_element_located((By.NAME, "email"))
+        )
+
         self.driver.find_element(By.NAME, "email").clear()
         self.driver.find_element(By.NAME, "email").send_keys(email)
         self.driver.find_element(By.NAME, "password").clear()
@@ -49,19 +58,19 @@ class BaseTest(unittest.TestCase):
         self.driver.find_element(
             By.CSS_SELECTOR, "button[type='submit']"
         ).click()
-        time.sleep(2)
-        if wait_url:
-            self.wait.until(EC.url_contains(wait_url))
+
+        # WAJIB tunggu redirect selesai sebelum lanjut ke test
+        # default wait_url jika tidak diisi pemanggil
+        target_url = wait_url if wait_url else "/"
+        self.wait.until(EC.url_contains(target_url))
 
     def logout(self):
         try:
             self.driver.find_element(
                 By.CSS_SELECTOR, ".dropdown-toggle"
             ).click()
-            time.sleep(1)
             self.wait.until(EC.element_to_be_clickable(
                 (By.CSS_SELECTOR, ".dropdown-menu .dropdown-item")
             )).click()
-            time.sleep(1)
         except Exception:
             pass
