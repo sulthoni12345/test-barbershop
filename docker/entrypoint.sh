@@ -92,7 +92,10 @@ fi
 #    Catatan: route:cache sengaja tidak dipakai karena routes/web.php
 #    memuat route berbentuk Closure yang tidak bisa di-cache.
 # ---------------------------------------------------------------------
-artisan storage:link --force
+# Dibuat sebagai root (bukan www-data): folder public/ dimiliki root, sehingga
+# "artisan storage:link" sebagai www-data gagal dengan "symlink(): Permission denied".
+# "ln -sfn" setara dengan storage:link dan aman dijalankan berulang.
+ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage
 artisan config:cache
 artisan view:cache
 
