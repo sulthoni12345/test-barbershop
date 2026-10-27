@@ -220,6 +220,109 @@ http://localhost:8000
 
 ---
 
+# 🐳 Menjalankan dengan Docker
+
+Selain XAMPP, aplikasi ini bisa dijalankan memakai **Docker Compose** sehingga tidak perlu memasang PHP, Apache, MySQL, maupun Node.js secara manual. Cara ini juga yang dipakai untuk deployment di Azure VM.
+
+## Arsitektur
+
+| Service | Image | Fungsi | Akses |
+| --- | --- | --- | --- |
+| `app` | dibangun dari `Dockerfile` (PHP 8.4 + Apache) | Aplikasi Laravel | Port 80 (publik) |
+| `database` | `mysql:8.4` | Database MySQL | Hanya dari dalam network `backend`, **tanpa port publik** |
+
+* **Network:** `frontend` (akses web) dan `backend` (`internal`, khusus antar-container).
+* **Volume:** `db_data` (data MySQL) dan `app_storage` (`storage/app`), data tetap ada setelah container dihentikan.
+* **Dockerfile:** multi-stage (`vendor` → `frontend` → `runtime`), sehingga Composer dan Node.js tidak ikut ke image akhir.
+
+## Prasyarat
+
+* Docker Engine / Docker Desktop dengan Docker Compose v2 (cek: `docker compose version`)
+* Git
+
+## Langkah Menjalankan
+
+**1. Clone repository**
+
+```bash
+git clone https://github.com/sulthoni12345/test-barbershop.git
+cd test-barbershop
+```
+
+**2. Siapkan file `.env`**
+
+```bash
+cp .env.example .env
+```
+
+Buka `.env`, lalu isi minimal nilai berikut:
+
+| Variabel | Keterangan |
+| --- | --- |
+| `APP_KEY` | Kunci aplikasi (wajib), cara membuat ada di bawah |
+| `DB_PASSWORD` | Password database aplikasi |
+| `MYSQL_ROOT_PASSWORD` | Password root MySQL |
+| `ADMIN_PASSWORD` | Password akun admin awal |
+| `APP_URL` | `http://localhost` (lokal) atau `http://<IP_SERVER>` |
+
+Membuat `APP_KEY`:
+
+```bash
+# Linux / macOS / Azure VM
+echo "base64:$(openssl rand -base64 32)"
+
+# Windows (CMD, memakai Docker)
+docker run --rm php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+```
+
+> Hindari karakter `$ # " '` dan spasi pada password agar tidak disalahartikan oleh Docker Compose.
+
+**3. Bangun dan jalankan**
+
+```bash
+docker compose up -d --build
+```
+
+Saat container `app` dimulai, script `docker/entrypoint.sh` otomatis menjalankan migrasi database dan membuat akun admin awal.
+
+**4. Periksa status**
+
+```bash
+docker compose ps
+docker compose logs -f app
+```
+
+Container `app` dan `database` harus berstatus `healthy`.
+
+**5. Buka aplikasi**
+
+```text
+http://localhost
+```
+
+Login memakai `ADMIN_EMAIL` dan `ADMIN_PASSWORD` dari file `.env`. Akun kasir dapat dibuat lewat halaman **Register** (role bawaan: `kasir`).
+
+> Jika port 80 sudah dipakai (misalnya XAMPP masih aktif), isi `APP_PORT=8080` di `.env` lalu buka `http://localhost:8080`.
+> Akun pada bagian "Akun Demo" di bawah hanya berlaku untuk instalasi XAMPP/lokal.
+
+## Perintah Berguna
+
+```bash
+docker compose ps                 # status container
+docker compose logs -f app        # log aplikasi
+docker compose restart app        # restart aplikasi
+docker compose down               # hentikan container (data TETAP aman)
+docker compose down -v            # hentikan dan HAPUS volume (data hilang!)
+docker compose up -d --build      # bangun ulang setelah kode berubah
+```
+
+## Catatan Keamanan
+
+* File `.env` berisi rahasia dan **tidak** di-commit (sudah ada di `.gitignore`), hanya `.env.example` yang ada di repository.
+* Database tidak mempublikasikan port ke luar, hanya dapat diakses oleh container `app`.
+
+---
+
 # 📖 Cara Penggunaan
 
 ## 1. Akses Admin (Barber)

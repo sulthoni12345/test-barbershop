@@ -1,0 +1,53 @@
+# =====================================================================
+# .dockerignore - file yang TIDAK dikirim ke Docker saat build
+# Tujuan: image kecil, build cepat, dan tidak membawa rahasia / file lokal.
+# Catatan: folder docker/ (entrypoint.sh) dan file konfigurasi frontend
+# (package*.json, vite/postcss/tailwind config) harus TETAP ikut.
+# =====================================================================
+
+# --- Git & editor ----------------------------------------------------
+.git
+.github
+.gitignore
+.gitattributes
+.editorconfig
+.idea
+.vscode
+*.md
+
+# --- Rahasia & konfigurasi lokal (JANGAN masuk image) -----------------
+.env
+.env.*
+
+# --- Dependensi (dipasang ulang di dalam image) -----------------------
+vendor
+node_modules
+
+# --- Hasil build / cache lokal (dibuat ulang di dalam image) ----------
+public/build
+public/hot
+public/storage
+bootstrap/cache/*.php
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/public/*
+storage/app/private/*
+database/*.sqlite
+
+# --- Pengujian & dokumentasi (tidak dipakai saat runtime) -------------
+tests
+selenium-tests
+screenshots
+phpunit.xml
+chromedriver.exe
+__pycache__
+.pytest_cache
+*.pyc
+
+# --- File Docker itu sendiri ------------------------------------------
+Dockerfile
+compose.yaml
+compose.*.yaml
+.dockerignore
